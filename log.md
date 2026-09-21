@@ -102,3 +102,70 @@ reason unchanged: no account data to size against.
 
 **Standing State is unchanged** — no baseline account value or all-time high has
 been established yet, because none has ever been observed.
+
+---
+
+### 2026-09-21 19:28 UTC / 15:28 ET (Monday, regular session, ~32 min to close)
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — same cause as runs #1 and #2. No orders placed, no data
+pulled. Third consecutive halt.**
+
+Checklist walked:
+
+1. **Kill switch** — no `STOP` file in repo root. Clear to proceed.
+2. **Memory** — `log.md` read in full. Runs #1 and #2 both blocked on broker
+   access. No open positions, no open orders, no theses, no targets or stops
+   carried into this run. Nothing to manage.
+3. **Pull live data** — **FAILED, unchanged.** `ListConnectors` still reports
+   Robinhood as `installState: connected`, `connected: true`,
+   **`enabledInChat: false`**. Two independent tool-registry searches confirm
+   the consequence: a keyword search for portfolio / positions / buying-power /
+   quote tools returns nothing broker-related, and a direct name lookup for
+   `robinhood_get_portfolio`, `robinhood_get_positions`, `get_account`,
+   `get_buying_power`, `place_order`, `get_stock_quote` returns
+   *"No matching deferred tools found."* The connector's tools are not loaded
+   into this session. Run #2's diagnosis holds: the per-chat toggle is read at
+   session start, so it must be on **before** a scheduled run fires.
+4. **Manage existing positions** — nothing to do; no positions have ever been
+   opened, and position state is in any case unreadable.
+5. **Look for new trades** — **deliberately skipped, same reasoning as run #1.**
+   Every sizing limit (≤70% committed, ≥30% cash, ≤40% options) and both loss
+   limits are percentages of account value. Account value is unknown, so no
+   trade can be *shown* to satisfy them, and the rule "if a trade would break
+   any rule, skip it" governs. This applies to paper trades too: logging a
+   fabricated position size would corrupt the very grading record this file
+   exists to preserve. Market data is reachable this session (web search works),
+   but market data is not the binding constraint — account data is.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data available to size against.
+
+**Notification sent** to the user's phone/email this run, flagging that the
+block is now three-for-three and will recur on every scheduled run until the
+connector is enabled for chats. Runs #1 and #2 recorded the problem in this file
+only, where a scheduled run has no reader.
+
+**To unblock (unchanged, and the only outstanding action):** on claude.ai, open
+connector settings and enable **Robinhood for chats/sessions**. Org-level
+authentication is already in place and is *not* the issue — the per-chat toggle
+is. It must be on before the next scheduled run starts.
+
+**Market context for continuity (no position taken, informational only):**
+Monday 2026-09-21. S&P 500 closed Friday at 7,650.50 (+0.17%), grinding sideways
+with mild downward pressure; futures opened the week higher on softer oil and
+easing Treasury yields. SPX holding above 7,600 support; Nasdaq above its
+50-day SMA. Light data week after last week's Fed decision — Chicago Fed
+National Activity Index and Fed speakers Monday, Philly Fed non-manufacturing
+and Richmond Fed manufacturing Tuesday, S&P Global flash PMIs Wednesday,
+jobless claims and new home sales Thursday. Scheduled macro catalyst: Trump
+hosts Xi at the White House Sept. 24 (trade, tariffs, Taiwan, AI) — a headline
+risk worth respecting on any short-dated long option held into Thursday.
+
+**Next run should:** re-check for `STOP`; confirm Robinhood tools are present
+*before anything else*; if present, pull portfolio and record the first
+account-value baseline, set the all-time high in Standing State, and only then
+proceed to steps 4–5. If still absent, do not re-derive the diagnosis from
+scratch — it is settled above; notify and stop.
