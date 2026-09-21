@@ -102,3 +102,60 @@ reason unchanged: no account data to size against.
 
 **Standing State is unchanged** — no baseline account value or all-time high has
 been established yet, because none has ever been observed.
+
+---
+
+### 2026-09-21 16:27 UTC / 12:27 ET (Monday, regular session open) — Run #3 (scheduled)
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — broker access still unavailable. No orders placed, no
+data pulled. Third consecutive blocked run.**
+
+Checklist walked:
+
+1. **Kill switch** — no `STOP` file in repo root. Clear to proceed.
+2. **Memory** — `log.md` read in full. Runs #1 and #2 both blocked on broker
+   access; no positions, no orders, no baseline value on record. Nothing to
+   manage.
+3. **Pull live data** — **FAILED, same cause as runs #1 and #2.** `ListConnectors`
+   returns Robinhood with `installState: connected`, `connected: true`,
+   `enabledInChat: false`. Two separate tool-registry searches (one for
+   portfolio/positions/buying-power/account tools, one for
+   quote/options-chain/order/market-data tools) returned **zero** broker tools —
+   only unrelated GitHub, artifact, and web tools. The connector's tools are not
+   loaded in this session, so the Agentic account is unreachable.
+4. **Manage existing positions** — nothing to manage. No positions have ever been
+   opened by this agent, and none are recorded in this log. (Note: whether the
+   real account holds positions is unknown and unverifiable from here — that is
+   itself a consequence of the block, not a claim that the account is empty.)
+5. **Look for new trades** — **deliberately skipped**, same reasoning as prior
+   runs. Sizing limits (≤70% committed / ≥30% cash / ≤40% options) and both loss
+   limits are all percentages of account value. Account value is unknown, so no
+   trade can be demonstrated to satisfy them. Under "if a trade would break any
+   rule, skip it," a trade that *cannot be checked* against the rules is skipped.
+   No paper trade is logged either: inventing sizing against a fictional account
+   value would corrupt the grading record this log exists to provide.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data available to size against.
+
+**User notified** via push at 16:27 UTC that the routine is blocked for a third
+run, with the fix below.
+
+**To unblock (unchanged, now three runs old):** on claude.ai, enable the
+Robinhood connector *for the chat/session the scheduled task runs in*, not just
+at org level — org auth is already in place and working. Per-chat enablement is
+read when a session starts, so toggling it while a run is in flight does not
+hot-load the tools; the fix can only be confirmed by a subsequent fresh run.
+
+**Market context for continuity:** Monday 2026-09-21, 12:27 ET — regular session
+underway. Nothing observed, nothing acted on.
+
+**Next run should:** re-check for `STOP`; confirm Robinhood tools are present in
+the tool registry before anything else; if present, pull portfolio first and
+record the first account-value baseline, set the all-time high in Standing State,
+and set the day's starting value. If still absent, this is run #4 blocked — worth
+telling the user the scheduled task is not viable in its current configuration
+rather than continuing to burn runs.
