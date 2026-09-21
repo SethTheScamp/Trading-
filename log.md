@@ -12,8 +12,8 @@ every run; append a new entry at the end of every run, then commit and push.
 - **DRAWDOWN HALT:** not active
 - **Open positions:** none recorded
 - **Open orders:** none recorded
-- **Last run:** 2026-09-21 17:28 UTC (run #3) — BLOCKED, no broker access
-- **Consecutive blocked runs:** 3 (broker connector not reaching scheduled runs)
+- **Last run:** 2026-09-21 18:28 UTC (run #4) — BLOCKED, no broker access
+- **Consecutive blocked runs:** 4 (Robinhood not on this routine's connector list)
 
 ## Setup Requirement — Broker Access on Scheduled Runs
 
@@ -243,3 +243,68 @@ for the same reason as every prior run.
 
 **Blocking on the user:** add Robinhood to the routine's Connectors list, then
 **Run now**. The next run should confirm tool visibility before anything else.
+
+---
+
+### 2026-09-21 18:28 UTC / 14:28 ET (Monday, regular session) — Run #4
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — fourth consecutive run with no broker access. No data
+pulled, no orders placed, no paper trades logged.**
+
+Kept short per run #3's instruction: the diagnosis in **Setup Requirement —
+Broker Access on Scheduled Runs** above still stands and is not re-argued here.
+
+1. **Kill switch** — no `STOP` file. Clear to proceed.
+2. **Memory** — read in full. See the branch note below; this run repaired a
+   split in the log's history before appending.
+3. **Pull live data** — **FAILED, cause unchanged.** `ListConnectors` returns
+   Robinhood `installState: connected`, `connected: true`, `enabledInChat:
+   false`. Two tool-registry searches (portfolio/positions/buying-power/quote/
+   order, and brokerage/balance/equity/execution/market-data) returned no
+   trading tools of any kind. The connector's tools are absent from this
+   routine's session.
+4. **Manage existing positions** — none on record; nothing to manage.
+5. **New trades** — skipped. Unchanged reasoning: every sizing and loss limit
+   is a percentage of account value, so with account value unknown no trade can
+   be shown to satisfy them, and the rule "if a trade would break any rule,
+   skip it" forces a skip. No invented-size paper trade was logged, to keep the
+   grading record clean.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data to size against.
+
+**Branch note — memory was fragmented, now repaired.** This routine's runs have
+each executed on a different branch of `SethTheScamp/Trading-`, and the remote
+had no shared default branch, so the log had forked:
+
+- `claude/sweet-turing-9t665u` — runs #1–#2 (`36573d4`)
+- `claude/sweet-turing-fytqz7` — a parallel run #3 entry (`b308b94`), same
+  blocked outcome, superseded
+- `claude/sweet-turing-d8pmk0` — run #3 plus the root-cause section and
+  `handoff-prompt.md` (`36ed4e6`) — the fullest history
+- `claude/hopeful-meitner-f61x84` — this run's assigned branch, which started
+  two runs behind at `36573d4`
+
+This run fast-forwarded the assigned branch onto `d8pmk0`, so
+`claude/hopeful-meitner-f61x84` now carries the complete history and is the
+branch to read. Nothing was lost: `fytqz7`'s entry records the same blocked
+state already covered by `d8pmk0`'s run #3. **If a future run finds its
+assigned branch missing recent entries, check `git ls-remote --heads origin`
+for a more advanced `claude/*` branch before appending.**
+
+**Still blocking on the user, unchanged from run #3's follow-up:** add
+**Robinhood** to this routine's **Connectors** list at
+<https://claude.ai/code/routines> (Edit → Connectors → Save), then **Run now**.
+No run can do this for itself.
+
+**Standing State unchanged.** No baseline account value, no all-time high, no
+positions. Runs #1–#4 have produced zero trading history.
+
+**Next run should:** check `STOP`; call `ListConnectors` and search the tool
+registry for Robinhood tools before anything else. If still absent, append a
+two-line entry and stop — the analysis above is complete and does not need
+restating. If tools ARE present, pull the portfolio immediately, record the
+first account-value baseline, and set the all-time high in Standing State.
