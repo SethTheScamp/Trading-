@@ -12,8 +12,9 @@ every run; append a new entry at the end of every run, then commit and push.
 - **DRAWDOWN HALT:** not active
 - **Open positions:** none recorded
 - **Open orders:** none recorded
-- **Last run:** 2026-09-21 18:28 UTC (run #4) — BLOCKED, no broker access
-- **Consecutive blocked runs:** 4 (Robinhood not on this routine's connector list)
+- **Last run:** 2026-09-21 20:28 UTC (run #5) — BLOCKED, no broker access
+- **Consecutive blocked runs:** 5 (Robinhood not on this routine's connector list)
+- **Trading days missed:** 1 full session (2026-09-21, pre-market through close)
 
 ## Setup Requirement — Broker Access on Scheduled Runs
 
@@ -308,3 +309,68 @@ registry for Robinhood tools before anything else. If still absent, append a
 two-line entry and stop — the analysis above is complete and does not need
 restating. If tools ARE present, pull the portfolio immediately, record the
 first account-value baseline, and set the all-time high in Standing State.
+
+---
+
+### 2026-09-21 20:28 UTC / 16:28 ET (Monday, after the close) — Run #5
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — fifth consecutive run with no broker access. No data
+pulled, no orders placed, no paper trades logged.**
+
+Short by design. The diagnosis under **Setup Requirement — Broker Access on
+Scheduled Runs** stands unchanged and is not re-argued.
+
+1. **Kill switch** — no `STOP` file in either repo root. Clear to proceed.
+2. **Memory** — read in full. Assigned branch `claude/hopeful-meitner-r6ask5`
+   started at `36573d4` (two runs stale) and did not exist on the remote. Per
+   run #4's handoff note, checked `git ls-remote origin` first, found
+   `claude/hopeful-meitner-f61x84` at `973b576` as the most advanced lineage,
+   and reset this branch onto it before appending. No entries lost.
+3. **Pull live data** — **FAILED, cause unchanged.** `ListConnectors` returns
+   Robinhood `installState: connected`, `connected: true`, `enabledInChat:
+   false`. A registry search for `robinhood` returns **no matching tools at
+   all**. The connector's tools are absent from this routine's session.
+4. **Manage existing positions** — none on record; nothing to manage.
+5. **New trades** — skipped, reasoning unchanged: every sizing limit (≤70%
+   committed, ≥30% cash, ≤40% options) and both loss limits (15% daily, 40%
+   drawdown) are percentages of account value. Account value is unknown, so no
+   trade can be shown to satisfy them, and "if a trade would break any rule,
+   skip it" forces a skip. No invented-size paper trade logged, to keep the
+   grading record clean.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data to size against.
+
+**New this run — the cost is now measurable.** Runs #1–#5 span 08:27 ET
+(pre-market) to 16:28 ET (after the close) on 2026-09-21. The routine has now
+missed one complete trading session end to end. It fires on schedule, reads its
+memory, finds no broker, and writes another blocked entry. Five runs have
+produced zero trading history and zero account observations.
+
+**Recommendation added this run: pause the routine until the fix lands.** Every
+further scheduled firing costs a run and appends another identical entry
+without moving the strategy forward. Better to pause it at
+<https://claude.ai/code/routines>, apply the connector fix, verify with **Run
+now**, and only then resume the schedule.
+
+**Market context (web search works; broker access is the only gap).** Monday
+2026-09-21 closed mixed — S&P 500 roughly flat to slightly higher near 7,650,
+Nasdaq higher near 26,520, Dow slightly lower near 51,680; tech led, utilities
+lagged. Recorded as context only. Figures are from a single search pass and
+were **not** cross-verified, so no thesis is built on them and nothing here
+should be treated as a tradeable signal.
+
+**Still blocking on the user, unchanged since run #3's follow-up:** add
+**Robinhood** to this routine's **Connectors** list at
+<https://claude.ai/code/routines> (Edit → Connectors → Save), then **Run now**.
+A run cannot do this for itself — `/schedule` is unavailable inside a cloud
+session.
+
+**Next run should:** check `STOP`; call `ListConnectors` and search the registry
+for Robinhood tools *before anything else*; if still absent, append a two-line
+blocked entry and stop — do not re-derive the diagnosis. If tools ARE present,
+pull the portfolio immediately, record the first account-value baseline, set the
+all-time high in Standing State, and reset **Consecutive blocked runs** to 0.
