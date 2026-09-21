@@ -15,6 +15,45 @@ every run; append a new entry at the end of every run, then commit and push.
 - **Last run:** 2026-09-21 17:28 UTC (run #3) — BLOCKED, no broker access
 - **Consecutive blocked runs:** 3 (broker connector not reaching scheduled runs)
 
+## Setup Requirement — Broker Access on Scheduled Runs
+
+This strategy runs as a **routine** (claude.ai/code/routines). Per the routines
+documentation, a routine carries **its own list of MCP connectors**, fixed when
+the routine is created:
+
+> "When you create a routine, all of your currently connected connectors are
+> included by default. Remove any that aren't needed…"
+
+Connectors connected to the account *after* the routine was created are **not**
+added retroactively. That is almost certainly why runs #1–#3 saw
+`enabledInChat: false` and zero Robinhood tools while the connector was healthy
+at account level: the Robinhood connector is not on this routine's connector
+list.
+
+**The fix (web UI only — a run cannot do this for itself):**
+
+1. Go to <https://claude.ai/code/routines> and open this trading routine.
+2. Menu next to the routine's name → **Edit**.
+3. Scroll to **Connectors** at the bottom of the form.
+4. Make sure **Robinhood** is listed and included. Add it if it is absent.
+5. **Save**, then use **Run now** to verify without waiting for the schedule.
+
+Notes:
+
+- `/schedule` is unavailable *inside* a cloud session, and routine runs are
+  cloud sessions — so no run can edit its own connector list. This must be done
+  from the web UI (or from a local CLI session with `/schedule update`).
+- Network allowlists are **not** the problem. MCP connector traffic is routed
+  through Anthropic's servers, not the session's network path, so the Default
+  environment's **Trusted** access level is fine and needs no domain changes.
+- A committed `.mcp.json` is **not** the right fix here. That path is for
+  local stdio servers added via `claude mcp add`. Robinhood is an OAuth
+  (`isAuthless: false`) account connector, and an unattended run cannot
+  complete an interactive OAuth sign-in.
+- Verification that the fix landed: a run should see Robinhood tools in its
+  tool registry. `ListConnectors` showing `enabledInChat: true` is the signal;
+  `false` with no Robinhood tools means the routine still lacks the connector.
+
 ## Limits Reference (copied here so every run can check without re-reading the prompt)
 
 - Total committed capital ≤ 70% of account value; ≥ 30% cash at all times
@@ -180,3 +219,27 @@ briefly and stop rather than repeating this analysis at length — the diagnosis
 above stands until the connector state changes. If tools ARE present, pull the
 portfolio immediately and record the first account-value baseline and set the
 all-time high in Standing State at the top of this file.
+
+---
+
+### 2026-09-21 — Interactive follow-up (not a scheduled run)
+
+User reported Robinhood tools working in a separate interactive chat and asked
+to make the schedule work too. Re-checked this session first: `ListConnectors`
+still returns Robinhood `connected: true, enabledInChat: false`, and a tool
+registry search still finds no Robinhood tools — so the block is unchanged
+*here*, consistent with the connector working in an ordinary chat while being
+absent from the routine.
+
+Root cause identified and documented under **Setup Requirement — Broker Access
+on Scheduled Runs** above: a routine carries its own connector list, frozen at
+creation time, and connectors added to the account later are not picked up.
+Runs #1–#3's earlier guesses (per-chat toggle timing, connectors possibly
+unavailable to scheduled runs at all) were both wrong; connectors *are*
+supported in routines, this routine just does not include Robinhood.
+
+No account data pulled, no orders placed, no paper trades logged — unchanged,
+for the same reason as every prior run.
+
+**Blocking on the user:** add Robinhood to the routine's Connectors list, then
+**Run now**. The next run should confirm tool visibility before anything else.
