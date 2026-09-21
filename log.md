@@ -12,6 +12,11 @@ every run; append a new entry at the end of every run, then commit and push.
 - **DRAWDOWN HALT:** not active
 - **Open positions:** none recorded
 - **Open orders:** none recorded
+- **BLOCKER (as of run #3):** Robinhood tools are not available in scheduled
+  Claude Code sessions (`enabledInChat: false`, no MCP servers configured).
+  Three consecutive runs have been unable to pull any account data. Check this
+  first every run — if broker tools are still absent, log and stop; do not
+  invent positions or sizing.
 
 ## Limits Reference (copied here so every run can check without re-reading the prompt)
 
@@ -102,3 +107,59 @@ reason unchanged: no account data to size against.
 
 **Standing State is unchanged** — no baseline account value or all-time high has
 been established yet, because none has ever been observed.
+
+---
+
+### 2026-09-21 21:28 UTC / 17:28 ET (Monday, after the close) — Run #3 (scheduled)
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** still not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — broker access still unavailable. No orders placed.**
+
+Checklist walked:
+
+1. **Kill switch** — no `STOP` file in either repo root. Clear to proceed.
+2. **Memory** — `log.md` read in full. Runs #1 and #2 both blocked; no positions,
+   no orders, no baseline ever recorded. Nothing to manage.
+3. **Pull live data** — **FAILED again.** Robinhood connector reports
+   `installState: connected`, `connected: true`, `enabledInChat: false` —
+   byte-identical to runs #1 and #2. Tool-registry search for broker, portfolio,
+   quote, order and options tools returns none.
+4. **Manage existing positions** — nothing to manage (no positions exist).
+5. **Look for new trades** — skipped, same reason as before: every sizing and
+   loss limit is a percentage of account value, and account value is unknown.
+
+**New diagnostic — run #2's hypothesis is disproved.** Run #2 guessed the per-chat
+connector toggle just needed to be on *before* a session starts, and that a fresh
+run would pick it up. This run **is** that fresh session — started cold by the
+scheduler, not by a user in a chat — and the flag is still `false`. Inspected the
+Claude Code configuration directly: `/root/.claude.json` has
+`mcpServers: []` (empty) and no project-scoped MCP servers. The only MCP tools
+present in this session are the GitHub ones injected by the harness.
+
+So the block is structural, not a stale toggle: **this is a Claude Code (web /
+scheduled) session, and claude.ai *chat* connectors are not loaded into it.**
+Flipping the in-chat toggle on claude.ai will fix a claude.ai chat session; there
+is no evidence it will ever surface Robinhood tools in a scheduled Claude Code
+run. The fix needs to make Robinhood available to Claude Code itself — i.e.
+configured as an MCP server for this environment — or the trading runs need to
+execute somewhere the chat connector is actually loaded.
+
+**Timing note for continuity:** this run fired at 17:28 ET, *after* the 16:00 ET
+close. Even with working broker access, no entry would have been appropriate:
+the entry rules require liquid underlyings with tight markets, and extended-hours
+books are neither. A schedule intended to trade should fire during the regular
+session (09:30–16:00 ET), ideally with enough runway to manage stops. Run #1
+fired 08:27 ET (pre-market), this one 17:28 ET (post-close) — so far no run has
+landed inside market hours.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data to size against, and post-close timing besides.
+
+**Standing State remains unchanged.** No baseline, no all-time high, no positions.
+
+**Next run should:** re-check `STOP`; check for Robinhood tools *first*; if they
+are present, the first job is simply to pull the portfolio and record the opening
+baseline and all-time high in Standing State — not to trade. Do not trade on the
+same run that first establishes the baseline unless it lands in market hours.
