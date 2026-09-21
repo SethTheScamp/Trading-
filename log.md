@@ -12,6 +12,8 @@ every run; append a new entry at the end of every run, then commit and push.
 - **DRAWDOWN HALT:** not active
 - **Open positions:** none recorded
 - **Open orders:** none recorded
+- **Last run:** 2026-09-21 17:28 UTC (run #3) — BLOCKED, no broker access
+- **Consecutive blocked runs:** 3 (broker connector not reaching scheduled runs)
 
 ## Limits Reference (copied here so every run can check without re-reading the prompt)
 
@@ -102,3 +104,79 @@ reason unchanged: no account data to size against.
 
 **Standing State is unchanged** — no baseline account value or all-time high has
 been established yet, because none has ever been observed.
+
+---
+
+### 2026-09-21 17:28 UTC / 13:28 ET (Monday, regular session open)
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — broker access still unavailable. No orders placed, no
+data pulled. This is the third consecutive blocked run.**
+
+Checklist walked:
+
+1. **Kill switch** — no `STOP` file in repo root. Clear to proceed.
+2. **Memory** — `log.md` read in full. Runs #1 and #2 both blocked on broker
+   access; no positions, no theses, no targets, no stops, no baseline value, no
+   all-time high are on record. Nothing to manage.
+3. **Pull live data** — **FAILED, same cause as runs #1 and #2.** `ListConnectors`
+   reports Robinhood: `installState: connected`, `connected: true`,
+   `enabledInChat: false`. A tool-registry search for broker, portfolio, quote,
+   order-preview and market-data tools returned nothing trading-related — the
+   connector's tools are genuinely absent from this session, consistent with the
+   flag. Account value, cash, buying power, positions and open orders are all
+   unreachable.
+4. **Manage existing positions** — nothing to manage (none on record), and
+   position state could not be verified either way.
+5. **Look for new trades** — **deliberately skipped**, same reasoning as prior
+   runs. Every sizing limit (≤70% committed, ≥30% cash, ≤40% options) and both
+   loss limits (15% daily, 40% drawdown) are percentages of account value. With
+   account value unknown, no trade can be demonstrated to satisfy them, so the
+   rule "if a trade would break any rule, skip it" forces a skip. Inventing an
+   account size to produce a paper trade would corrupt the grading record this
+   log exists to keep, so no paper trade is logged either.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data to size against.
+
+**Revised diagnosis (this changes the recommended fix).** Run #2 guessed the
+per-chat connector toggle simply needed to be on before a session starts. Three
+runs now say the problem is more specific than that: this is a *scheduled*
+run, executing in a fresh remote container with no chat UI attached. The
+`enabledInChat` toggle is a property of an interactive claude.ai conversation,
+and a scheduled task does not inherit it. So flipping that toggle inside a
+browser chat, however early, is unlikely to ever reach these automated runs.
+
+**To unblock — what to check, in order:**
+
+1. In the scheduled-task / automation settings for this task (not a chat
+   window), confirm the Robinhood connector is enabled for the task itself.
+   That is the setting most likely to be missing.
+2. If the automation settings offer no connector toggle, then MCP connectors
+   may not be available to scheduled runs at all on this account tier. In that
+   case this strategy cannot run unattended as written, and the realistic
+   options are: (a) run it interactively in a chat with Robinhood enabled, or
+   (b) supply account data to the repo some other way the runner can read.
+3. Sanity check, cheap and worth doing: open an ordinary claude.ai chat with
+   the Robinhood connector on and confirm it can actually read the **Agentic**
+   account. That separates "connector broken / wrong account scope" from
+   "connector not reaching scheduled runs."
+
+**Note on what this session *can* reach:** web search and web fetch work, so
+market research is technically possible. It was not performed, and no watchlist
+or candidate trades are recorded, because with no account value, no cash figure
+and no position list, any such list would be untethered from the rules that
+govern whether it could be acted on. Research is not the bottleneck; account
+access is.
+
+**Standing State remains unchanged.** No baseline account value, no all-time
+high, no positions. Runs #1–#3 have produced zero trading history.
+
+**Next run should:** re-check for `STOP`; call `ListConnectors` and search the
+tool registry for Robinhood tools *before anything else*; if still absent, log
+briefly and stop rather than repeating this analysis at length — the diagnosis
+above stands until the connector state changes. If tools ARE present, pull the
+portfolio immediately and record the first account-value baseline and set the
+all-time high in Standing State at the top of this file.
