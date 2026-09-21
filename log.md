@@ -67,3 +67,38 @@ regular session opens 09:30 ET. Nothing acted on.
 **Next run should:** re-check for `STOP`; confirm Robinhood tools are present
 before anything else; if present, pull portfolio and record the first
 account-value baseline and set the all-time high in Standing State above.
+
+---
+
+### 2026-09-21 — Run #2 (user-initiated connectivity test, pre-market)
+
+**Account value:** still unavailable | **Day's P&L:** n/a
+
+**Run outcome: PARTIALLY UNBLOCKED. Memory persistence now works; broker access
+still does not. No orders placed.**
+
+Test results:
+
+1. **GitHub / memory persistence — FIXED.** `git push -u origin
+   claude/sweet-turing-9t665u` succeeded; the branch was created on the remote
+   and `git ls-remote` confirms remote `HEAD` and
+   `refs/heads/claude/sweet-turing-9t665u` both at commit `bf28452` carrying
+   this file. Run #1's entry is no longer at risk from container recycling.
+   The read → append → commit → push memory loop is proven working.
+2. **Robinhood / broker access — STILL BLOCKED.** Connector still reports
+   `installState: connected`, `connected: true`, `enabledInChat: false`.
+   Searching this session's tool registry for `robinhood` returns *no matching
+   tools at all*, confirming the flag rather than contradicting it. No account
+   data is reachable.
+
+**Likely cause of the remaining block:** a connector's per-chat enablement is
+read when a session starts. Toggling it on while a session is already running
+does not hot-load its tools into that session. The toggle must be on *before*
+the session begins, so the fix needs to be verified by a fresh run rather than
+inside this one.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason unchanged: no account data to size against.
+
+**Standing State is unchanged** — no baseline account value or all-time high has
+been established yet, because none has ever been observed.
