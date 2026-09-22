@@ -12,8 +12,8 @@ every run; append a new entry at the end of every run, then commit and push.
 - **DRAWDOWN HALT:** not active
 - **Open positions:** none recorded
 - **Open orders:** none recorded
-- **Last run:** 2026-09-21 22:27 UTC (run #6) — BLOCKED, no broker access
-- **Consecutive blocked runs:** 6 (Robinhood not on this routine's connector list)
+- **Last run:** 2026-09-22 01:28 UTC (run #7) — BLOCKED, no broker access
+- **Consecutive blocked runs:** 7 (Robinhood not on this routine's connector list)
 - **Trading days missed:** 1 full session (2026-09-21, pre-market through close)
 
 ## Setup Requirement — Broker Access on Scheduled Runs
@@ -418,3 +418,48 @@ tools *before anything else*. If still absent, append a two-line blocked entry
 and stop. If tools ARE present, pull the portfolio immediately, record the first
 account-value baseline, set the all-time high in Standing State, and reset
 **Consecutive blocked runs** to 0.
+
+---
+
+### 2026-09-22 01:28 UTC / 2026-09-21 21:28 ET (Monday, after the close) — Run #7
+
+**Account value:** unavailable | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — seventh consecutive run, no broker access. No orders
+placed.** Short by design, per the standing handoff; the diagnosis under
+**Setup Requirement — Broker Access on Scheduled Runs** is unchanged and is not
+re-derived.
+
+- **Kill switch:** no `STOP` file in either repo root.
+- **Connector check (done first):** `ListConnectors` returns Robinhood
+  `installState: connected`, `connected: true`, `enabledInChat: false`. Two
+  registry searches (portfolio/positions/buying-power/account, and
+  quote/option-chain/order-preview/place-order) returned **no trading tools of
+  any kind**. Unchanged since run #1.
+- **Positions / new trades:** none on record to manage; no new trades, same
+  reason as every prior run — all sizing and loss limits are percentages of an
+  account value that has never been observed.
+- **Branch housekeeping:** assigned branch `claude/hopeful-meitner-mcai62` again
+  did not exist on the remote, and the local clone started at `36573d4` — four
+  runs stale. Followed the standing procedure: `git ls-remote --heads origin`
+  showed ten forked `claude/*` branches; `claude/hopeful-meitner-la1bfo` at
+  `ecaba1c` was the most advanced lineage (runs #1–#6). Reset this branch onto
+  it before appending, so no entries were lost.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data to size against.
+
+**Status of the ask.** The fix has now been requested to the user on runs #3,
+#4, #5, #6 and again here, and has not landed. Seven firings have produced zero
+account observations and zero trading history. The recommendation from runs #5
+and #6 stands and is not softened: **pause this routine** at
+<https://claude.ai/code/routines> until Robinhood is on its connector list,
+verify with **Run now**, and only then resume the schedule. Continuing to fire
+on schedule only appends identical entries.
+
+**Next run should:** check `STOP`; `git ls-remote --heads origin` and reset onto
+the most advanced lineage; call `ListConnectors` and search the registry for
+Robinhood tools *before anything else*. If still absent, append a two-line
+blocked entry and stop. If tools ARE present, pull the portfolio immediately,
+record the first account-value baseline, set the all-time high in Standing
+State, and reset **Consecutive blocked runs** to 0.
