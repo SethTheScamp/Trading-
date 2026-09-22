@@ -102,3 +102,61 @@ reason unchanged: no account data to size against.
 
 **Standing State is unchanged** — no baseline account value or all-time high has
 been established yet, because none has ever been observed.
+
+---
+
+### 2026-09-22 02:28 UTC / 2026-09-21 22:28 ET (Monday evening, market closed)
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** still not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — third consecutive run with no broker access. No orders
+placed, no data pulled.**
+
+Checklist walked:
+
+1. **Kill switch** — no `STOP` file in repo root. Clear to proceed.
+2. **Memory** — `log.md` read in full. Standing State still carries no baseline:
+   no account value has ever been observed, so all-time high remains unset and
+   the drawdown rule has no reference point.
+3. **Pull live data** — **FAILED, unchanged from runs #1 and #2.** The Robinhood
+   connector reports `installState: connected`, `connected: true`,
+   `enabledInChat: false`. Searching this session's tool registry for
+   `robinhood` returns no matching tools. Run #2's hypothesis — that the
+   per-chat toggle is read at session start, so a fresh session would pick it
+   up — is now **disproved for this session**: this is a fresh scheduled run
+   and the flag is still false. The per-chat enablement has evidently not been
+   turned on at all, or scheduled runs do not inherit it from the chat where it
+   was set.
+4. **Manage existing positions** — nothing to manage; no positions have ever
+   been opened, and none could be read regardless.
+5. **Look for new trades** — **deliberately skipped**, same reason as prior
+   runs: every sizing limit (70% committed / 30% cash / 40% options) and both
+   loss limits are percentages of account value. With account value unknown,
+   no trade can be demonstrated to satisfy them, so the rule "if a trade would
+   break any rule, skip it" forces a skip. No paper trade is logged either —
+   inventing sizing against an imaginary balance would corrupt the grading
+   record this log exists to keep.
+
+**Timing note:** even with broker access, this run fired at 22:28 ET Monday —
+after the close. The regular session for Tuesday 2026-09-22 opens 09:30 ET.
+Any first real run will want to land inside market hours.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data available to size against.
+
+**To unblock (unchanged, now escalated):** the Robinhood connector needs to be
+enabled *for this scheduled task's sessions*, not just authorized at the org
+level. Org auth is already in place (`connected: true`); the missing piece is
+`enabledInChat`. If the connector settings for the scheduled task don't expose
+that toggle, the schedule may need to be recreated from a chat that has the
+connector switched on.
+
+**Standing State is unchanged** — no baseline, no all-time high, no positions,
+no orders.
+
+**Next run should:** re-check for `STOP`; confirm Robinhood tools are loaded
+before anything else; if still absent, log briefly rather than re-deriving the
+same diagnosis at length — the cause is established. If present, pull the
+portfolio, record the first account-value baseline, and set the all-time high
+in Standing State.
