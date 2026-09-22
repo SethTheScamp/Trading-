@@ -102,3 +102,66 @@ reason unchanged: no account data to size against.
 
 **Standing State is unchanged** — no baseline account value or all-time high has
 been established yet, because none has ever been observed.
+
+---
+
+### 2026-09-22 00:27 UTC / 2026-09-21 20:27 ET (Monday, after hours) — Run #3
+
+**Account value:** unavailable | **Cash:** unavailable | **Buying power:** unavailable
+**All-time high:** still not established | **Day's P&L:** unavailable
+
+**Run outcome: BLOCKED — third consecutive run with no broker access. No orders
+placed.** First *scheduled* (unattended) run since the connectivity test.
+
+Checklist walked:
+
+1. **Kill switch** — no `STOP` file in either repo root. Clear to proceed.
+2. **Memory** — `log.md` read in full. Runs #1 and #2 survived container
+   recycling intact, confirming the read → append → commit → push loop holds.
+   No open positions, no open orders, no baseline, no all-time high on record.
+3. **Pull live data** — **FAILED, same cause as runs #1 and #2.**
+   `ListConnectors` returns Robinhood as `installState: connected`,
+   `connected: true`, **`enabledInChat: false`**. A registry search for
+   `robinhood` returns no matching tools, and searches for brokerage /
+   portfolio / order / quote tools return only unrelated tools (GitHub,
+   artifacts, web search). No path to the Agentic account exists in this
+   session.
+4. **Manage existing positions** — nothing to manage; no positions on record
+   and none observable.
+5. **Look for new trades** — **skipped, deliberately.** Every sizing limit
+   (70% committed / 30% cash / 40% options) and both loss limits are defined
+   as percentages of account value. Account value is unknown, so no trade can
+   be *shown* to satisfy them. Under "if a trade would break any rule, skip
+   it," an unverifiable trade is a skipped trade. I also did not invent paper
+   fills from web-sourced prices: PAPER entries exist to be graded later, and
+   fabricated sizing against an unknown account would corrupt that record
+   rather than preserve it.
+
+**Actions taken:** none. **Orders placed:** none. **Orders skipped:** all —
+reason: no account data to size against.
+
+**Diagnosis refined.** Run #2 hypothesised that the per-chat connector toggle
+must be on *before* a session starts. This run tests that hypothesis and the
+result is informative: this is a fresh, scheduled session — a brand-new
+container, a cold start — and the toggle is *still* off. So the problem is not
+a hot-load timing issue that a fresh session would clear on its own. The
+per-chat enablement simply is not set on the configuration that scheduled runs
+inherit. Enabling the connector inside a live chat window does not propagate to
+the scheduled task; the scheduled task carries its own connector settings.
+
+**To unblock (updated, actionable):** enable the Robinhood connector on the
+*scheduled task / automation* itself, not only in an interactive chat. In the
+claude.ai UI this is the connector toggle shown when editing the scheduled task
+that runs this prompt. Org-level OAuth is already in place and healthy
+(`connected: true`) — the only missing piece is per-session enablement for the
+automation. Until that flips, every scheduled run will terminate here.
+
+**Standing State unchanged** — still no baseline account value, still no
+all-time high, still no positions. Nothing to carry forward but this diagnosis.
+
+**Next run should:** check `STOP`; call `ListConnectors` and confirm Robinhood
+shows `enabledInChat: true` *before* anything else. If it does, pull the
+portfolio immediately and write the first account-value baseline and all-time
+high into Standing State — that baseline is the prerequisite for every rule in
+this system. If it still shows false, do not re-derive this diagnosis at
+length; log one line pointing at this entry and end.
